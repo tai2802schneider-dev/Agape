@@ -1727,15 +1727,28 @@ function importarItensFoto() {
   renderComprasPendentes();
 }
 
+function gerarProximoCodigo() {
+  const todos = (db.estoque || []).map(p => parseInt(p.codigo)).filter(n => !isNaN(n));
+  const max = todos.length ? Math.max(...todos) : 0;
+  return String(max + 1).padStart(3, '0');
+}
+
 function adicionarItemCompra() {
-  const codigo   = document.getElementById('comp-codigo').value.trim();
   const desc     = document.getElementById('comp-desc').value.trim();
   const tamanho  = document.getElementById('comp-tamanho').value.trim();
   const qtd      = parseInt(document.getElementById('comp-qtd').value) || 1;
   const nota     = parseFloat(document.getElementById('comp-vl-nota').value) || 0;
   const revenda  = parseFloat(document.getElementById('comp-vl-revenda').value) || 0;
   const marca    = document.getElementById('comp-marca').value;
-  if (!codigo || !desc) { showAlert('Informe código e descrição.', 'danger'); return; }
+  if (!desc) { showAlert('Informe a descrição.', 'danger'); return; }
+  // Reutiliza código do produto existente com mesma descrição, senão gera novo
+  let codigo = document.getElementById('comp-codigo').value.trim();
+  if (!codigo) {
+    const descNorm = desc.toLowerCase().trim();
+    const existente = (db.estoque || []).find(p => (p.descricao || p.desc || '').toLowerCase().trim() === descNorm);
+    codigo = existente ? existente.codigo : gerarProximoCodigo();
+    document.getElementById('comp-codigo').value = codigo;
+  }
   _compItens.push({ id: Date.now() + Math.random(), codigo, desc, tamanho, qtd, nota, revenda, marca });
   ['comp-codigo','comp-desc','comp-tamanho','comp-vl-nota','comp-vl-revenda'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('comp-qtd').value = 1;
