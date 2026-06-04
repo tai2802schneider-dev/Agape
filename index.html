@@ -902,9 +902,9 @@
       <div class="search-bar">
         <input type="text" id="cli-busca" placeholder="🔍 Buscar cliente..." oninput="renderClientes()">
         <select id="cli-filtro" onchange="renderClientes()">
-          <option value="">Todos</option>
-          <option value="pendente">Com pendências</option>
-          <option value="quitado">Quitado</option>
+          <option value="">Pendentes (padrão)</option>
+          <option value="todos">Todos</option>
+          <option value="quitado">Quitados</option>
         </select>
       </div>
       <div id="clientes-lista"></div>
@@ -1348,22 +1348,24 @@ async function loadDB() {
         db[key] = (r.data || []).map(row => ({ ...row, desc: row.descricao || row.desc || '' }));
       }
     });
-    // Embutir parcelas nos clientes (estrutura esperada pelo sistema)
+    // Embutir parcelas nos clientes — usa nome como chave pois IDs podem divergir
     if (!rParcelas.error && rParcelas.data) {
-      const parcPorCliente = {};
+      const parcPorNome = {};
       rParcelas.data.forEach(p => {
-        const pid = p.cliente_id;
-        if (!parcPorCliente[pid]) parcPorCliente[pid] = [];
-        parcPorCliente[pid].push({
+        const nome = (p.cliente_nome || '').trim();
+        if (!parcPorNome[nome]) parcPorNome[nome] = [];
+        parcPorNome[nome].push({
           ...p,
           desc: p.descricao || p.desc || '',
+          dataPagamento: p.data_pagto,
           dataPag: p.data_pagto,
-          formaPag: p.metodo
+          formaPag: p.metodo,
+          num: parcPorNome[nome].length + 1
         });
       });
       db.clientes = db.clientes.map(c => ({
         ...c,
-        parcelas: parcPorCliente[c.id] || c.parcelas || []
+        parcelas: parcPorNome[c.nome] || parcPorNome[(c.nome||'').trim()] || c.parcelas || []
       }));
     }
     localStorage.setItem('agape-db', JSON.stringify(db));
@@ -2391,8 +2393,10 @@ function renderClientes() {
   const filtro = document.getElementById('cli-filtro')?.value || '';
   let items = db.clientes;
   if (busca) items = items.filter(c => c.nome.toLowerCase().includes(busca));
-  if (filtro === 'pendente') items = items.filter(c => c.parcelas.some(p => !p.pago));
-  if (filtro === 'quitado') items = items.filter(c => c.parcelas.every(p => p.pago));
+  // Por padrão oculta quitados; filtro 'quitado' mostra só quitados; 'todos' mostra todos
+  if (filtro === 'pendente' || filtro === '') items = items.filter(c => c.parcelas && c.parcelas.some(p => !p.pago));
+  if (filtro === 'quitado') items = items.filter(c => !c.parcelas || c.parcelas.every(p => p.pago));
+  // filtro === 'todos' mostra tudo
 
   // Resumo de recebimentos
   const mes = thisMonth();
