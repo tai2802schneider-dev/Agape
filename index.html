@@ -2470,7 +2470,7 @@ function editarCliente(id) {
   if (!c) return;
   document.getElementById('modal-cli-id').value = id;
   document.getElementById('modal-cli-nome').value = c.nome;
-  document.getElementById('modal-cli-tel').value = c.tel || '';
+  document.getElementById('modal-cli-tel').value = c.telefone || c.tel || '';
   document.getElementById('modal-cliente').style.display = 'flex';
 }
 
@@ -2478,16 +2478,21 @@ function fecharModalCliente() {
   document.getElementById('modal-cliente').style.display = 'none';
 }
 
-function salvarEdicaoCliente() {
-  const id = parseInt(document.getElementById('modal-cli-id').value);
-  const c = db.clientes.find(x => x.id === id);
+async function salvarEdicaoCliente() {
+  const id = document.getElementById('modal-cli-id').value;
+  const c = db.clientes.find(x => String(x.id) === String(id));
   if (!c) return;
   const nome = document.getElementById('modal-cli-nome').value.trim();
   const tel = document.getElementById('modal-cli-tel').value.trim();
   if (!nome) { alert('Nome não pode ficar vazio.'); return; }
   c.nome = nome;
+  c.telefone = tel;
   c.tel = tel;
-  saveDB();
+  // Sync para Supabase
+  try {
+    await _sb.from('clientes').update({ nome, telefone: tel }).eq('id', id);
+  } catch(e) {}
+  await saveDB();
   renderClientes();
   fecharModalCliente();
   showAlert('✔ Cliente atualizado!');
