@@ -2441,8 +2441,8 @@ function renderClientes() {
         <div style="display:flex;gap:8px;align-items:center;">
           <span class="badge ${pagas===c.parcelas.length?'badge-verde':'badge-amarelo'}">${pagas}/${c.parcelas.length} pagas</span>
           <span style="font-size:13px;color:var(--vinho);font-weight:700;">${totalPend > 0 ? 'Pendente: ' + fmt(totalPend) : '✅ Quitado'}</span>
-          <button class="btn btn-sm btn-outline" onclick="editarCliente(${c.id})" title="Editar cliente">✏️ Editar</button>
-          <button class="btn btn-sm btn-danger" onclick="excluirCliente(${c.id})" title="Excluir cliente">🗑 Excluir</button>
+          <button class="btn btn-sm btn-outline" onclick="editarCliente('${c.id}')" title="Editar cliente">✏️ Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirCliente('${c.id}')" title="Excluir cliente">🗑 Excluir</button>
         </div>
       </div>
       <div style="font-size:12px;color:#888;margin-bottom:10px;">Total: ${fmt(c.total)} | Entrada: ${fmt(c.entrada)} | ${c.parcelas.length}x de ${fmt(c.parcelas[0]?.valor||0)} | Venda: ${fmtDate(c.dataVenda)}</div>
@@ -2452,11 +2452,11 @@ function renderClientes() {
             <div class="num ${p.pago?'pago':p.vencimento<today()?'vencido':''}">${p.num}</div>
             <div style="flex:1;font-size:13px;">Parcela ${p.num}</div>
             <div style="font-size:12px;color:#888;">${p.vencimento ? 'Vence: ' + fmtDate(p.vencimento) : '⏳ Vencimento a definir'}</div>
-            ${!p.pago ? `<button class="btn btn-sm btn-outline" style="margin-left:6px;" onclick="editarParcela(${c.id}, ${i})" title="Editar parcela">✏️</button>` : ''}
+            ${!p.pago ? `<button class="btn btn-sm btn-outline" style="margin-left:6px;" onclick="editarParcela('${c.id}', ${i})" title="Editar parcela">✏️</button>` : ''}
             ${p.pago
               ? `<span class="badge badge-verde" style="margin-left:8px;">✅ Pago em ${fmtDate(p.dataPagamento)}</span>
-                 <button class="btn btn-sm btn-outline" style="margin-left:4px;color:var(--vinho);border-color:var(--vinho);" onclick="desfazerPagamento(${c.id}, ${i})" title="Desfazer pagamento">↩️</button>`
-              : `<button class="btn btn-sm btn-primary" style="margin-left:6px;" onclick="marcarPago(${c.id}, ${i})">💰 Receber</button>`
+                 <button class="btn btn-sm btn-outline" style="margin-left:4px;color:var(--vinho);border-color:var(--vinho);" onclick="desfazerPagamento('${c.id}', ${i})" title="Desfazer pagamento">↩️</button>`
+              : `<button class="btn btn-sm btn-primary" style="margin-left:6px;" onclick="marcarPago('${c.id}', ${i})">💰 Receber</button>`
             }
             <div style="font-weight:700;margin-left:8px;">${fmt(p.valor)}</div>
           </div>`).join('')}
