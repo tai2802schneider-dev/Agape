@@ -1337,14 +1337,35 @@ async function loadDB() {
   // SEMPRE busca do Supabase (fonte de verdade)
   try {
     const keys = Object.keys(_SB_MAP);
-    const resultados = await Promise.all(keys.map(tbl => _sb.from(tbl).select('*')));
+    // Busca todas as tabelas + parcelas de uma vez
+    const [resultados, rParcelas] = await Promise.all([
+      Promise.all(keys.map(tbl => _sb.from(tbl).select('*'))),
+      _sb.from('parcelas').select('*')
+    ]);
     keys.forEach((key, i) => {
       const r = resultados[i];
       if (!r.error) {
-        // Substitui sempre — Supabase é a fonte de verdade
         db[key] = (r.data || []).map(row => ({ ...row, desc: row.descricao || row.desc || '' }));
       }
     });
+    // Embutir parcelas nos clientes (estrutura esperada pelo sistema)
+    if (!rParcelas.error && rParcelas.data) {
+      const parcPorCliente = {};
+      rParcelas.data.forEach(p => {
+        const pid = p.cliente_id;
+        if (!parcPorCliente[pid]) parcPorCliente[pid] = [];
+        parcPorCliente[pid].push({
+          ...p,
+          desc: p.descricao || p.desc || '',
+          dataPag: p.data_pagto,
+          formaPag: p.metodo
+        });
+      });
+      db.clientes = db.clientes.map(c => ({
+        ...c,
+        parcelas: parcPorCliente[c.id] || c.parcelas || []
+      }));
+    }
     localStorage.setItem('agape-db', JSON.stringify(db));
   } catch(e) { /* offline — mantém localStorage */ }
 }
